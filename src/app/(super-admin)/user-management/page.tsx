@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 /* eslint-disable  @typescript-eslint/no-unused-vars */
 import {
   Breadcrumb,
@@ -82,7 +83,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { DEFAULT_PAGE_SIZE } from "@/constants/api";
 
-export default function UserManagementPage() {
+function UserManagementPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -1022,5 +1023,27 @@ export default function UserManagementPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function UserManagementPage() {
+  return (
+    <Suspense fallback={
+      <div className="px-[1rem] md:px-[2rem]">
+        <div className="flex items-center justify-between mb-6">
+          <div className="space-y-2">
+            <div className="h-8 w-64 bg-gray-200 rounded animate-pulse" />
+            <div className="h-4 w-48 bg-gray-200 rounded animate-pulse" />
+          </div>
+          <div className="h-10 w-32 bg-gray-200 rounded animate-pulse" />
+        </div>
+        <div className="space-y-4">
+          <div className="h-12 w-full bg-gray-200 rounded animate-pulse" />
+          <div className="h-64 w-full bg-gray-200 rounded animate-pulse" />
+        </div>
+      </div>
+    }>
+      <UserManagementPageContent />
+    </Suspense>
   );
 }

@@ -1,11 +1,12 @@
-import {
-  CustomerManagementIcon,
-  DashboardIcon,
-  PermissionManagementIcon,
-  RoleManagementIcon,
-  UserManagementIcon,
-} from "@/components/icons";
-import { Transaction } from "@/components/icons/Transaction";
+// COMMENTED OUT - NOT USED (only showing 3 items in sidebar)
+// import {
+//   CustomerManagementIcon,
+//   DashboardIcon,
+//   PermissionManagementIcon,
+//   RoleManagementIcon,
+//   UserManagementIcon,
+// } from "@/components/icons";
+// import { Transaction } from "@/components/icons/Transaction";
 import { ComponentType } from "react";
 import { UserPlus, DollarSign, Shield } from "lucide-react";
 

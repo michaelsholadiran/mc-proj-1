@@ -2,9 +2,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const guestRoutes = ["/login", "/reset-password", "/forgot-password"];
+// COMMENTED OUT FOR TESTING
+// const guestRoutes = ["/login", "/reset-password", "/forgot-password"];
 
-export function middleware(request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function middleware(_request: NextRequest) {
   // AUTHENTICATION GUARDS COMMENTED OUT FOR TESTING - ALLOWING ALL ROUTES
   // const token = request.cookies.get("cred-crm-ticket-tok")?.value;
   // const { pathname } = request.nextUrl;

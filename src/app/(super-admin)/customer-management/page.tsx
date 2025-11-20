@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -64,7 +65,7 @@ import { CalendarIcon, X, ChevronDown } from "lucide-react";
 import DatePickerWithRange from "@/components/ui/date-picker-with-range";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function CustomerManagementPage() {
+function CustomerManagementPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -818,5 +819,24 @@ export default function CustomerManagementPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function CustomerManagementPage() {
+  return (
+    <Suspense fallback={
+      <div className="px-[1rem] md:px-[2rem]">
+        <div className="flex items-center justify-between mb-6">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="space-y-4">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </div>
+    }>
+      <CustomerManagementPageContent />
+    </Suspense>
   );
 }

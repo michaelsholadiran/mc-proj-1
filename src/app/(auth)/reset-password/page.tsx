@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import { Suspense } from "react";
 
 import {
   Form,
@@ -14,7 +15,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff, Lock } from "lucide-react";
 import LoaderButton from "@/components/ui/loading-button";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   resetPasswordSchema,
   ResetPasswordValidation,
@@ -22,11 +23,9 @@ import {
 import { useResetPasswordMutation } from "@/query-options/authenticationQueryOption";
 import { APIError } from "@/types";
 import { toast } from "sonner";
-import { useSearchParams } from "next/navigation";
 import PasswordValidation from '@/components/forms/PasswordValidation';
 
-
-export default function ResetPassword() {
+function ResetPasswordForm() {
   const [passwordType, setPasswordType] = useState("password");
   const [passwordConfirmType, setPasswordConfirmType] = useState("password");
   const form = ResetPasswordValidation();
@@ -241,5 +240,24 @@ export default function ResetPassword() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={
+      <div className="grid grid-cols-1 md:grid-cols-2 min-h-screen bg-[#0284B2] max-h-[100vh] gap-4 font-[family-name:var(--font-dm)] px-[1rem] md:px-[2rem]">
+        <div className="bg-white max-h-full h-full hidden md:block">
+          <div className="h-full md:flex flex-col justify-center items-center">
+            <div className="animate-pulse">Loading...</div>
+          </div>
+        </div>
+        <div className="bg-white text-center flex flex-col justify-center items-center">
+          <div className="animate-pulse">Loading...</div>
+        </div>
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

@@ -1,5 +1,6 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+// COMMENTED OUT FOR TESTING
+// import { cookies } from "next/headers";
+// import { redirect } from "next/navigation";
 import React from "react";
 
 export default async function AuthLayout({

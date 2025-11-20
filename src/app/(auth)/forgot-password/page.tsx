@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import { Suspense } from "react";
 
 import {
   Form,
@@ -22,7 +23,7 @@ import { useInitiatePasswordResetMutation } from "@/query-options/authentication
 import { APIError, InitiatePasswordResetResponse } from "@/types";
 import { toast } from "sonner";
 
-export default function ForgotPassword() {
+function ForgotPasswordForm() {
   const form = ForgotPasswordValidation();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -154,5 +155,24 @@ export default function ForgotPassword() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ForgotPassword() {
+  return (
+    <Suspense fallback={
+      <div className="grid grid-cols-1 md:grid-cols-2 min-h-screen bg-[#0284B2] max-h-[100vh] gap-4 font-[family-name:var(--font-dm)] px-[1rem] md:px-[2rem]">
+        <div className="bg-white max-h-full h-full hidden md:block">
+          <div className="h-full md:flex flex-col justify-center items-center">
+            <div className="animate-pulse">Loading...</div>
+          </div>
+        </div>
+        <div className="bg-white text-center flex flex-col justify-center items-center">
+          <div className="animate-pulse">Loading...</div>
+        </div>
+      </div>
+    }>
+      <ForgotPasswordForm />
+    </Suspense>
   );
 }

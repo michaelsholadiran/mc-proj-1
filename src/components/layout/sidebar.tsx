@@ -32,7 +32,7 @@ export default function AppSidebar() {
   // AUTHENTICATION CHECKS COMMENTED OUT FOR TESTING
   // const { data: authenticatedUser, isLoading: isLoadingAuthenticatedUser } =
   //   useQuery(getAuthenticatedUserQueryOptions());
-  const authenticatedUser = null;
+  // const authenticatedUser = null; // Not used, using mock data below
   const isLoadingAuthenticatedUser = false;
   
   const { mutate: logOut, isPending: isLoggingOut } = useLogoutMutation();

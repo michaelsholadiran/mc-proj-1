@@ -17,8 +17,9 @@ import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import LoaderButton from "@/components/ui/loading-button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useLoginMutation } from "@/query-options/authenticationQueryOption";
-import { APIError } from "@/types";
+// COMMENTED OUT FOR TESTING
+// import { useLoginMutation } from "@/query-options/authenticationQueryOption";
+// import { APIError } from "@/types";
 
 export default function Login() {
   const [passwordType, setPasswordType] = useState("password");
@@ -33,7 +34,8 @@ export default function Login() {
     return setPasswordType("password");
   };
 
-  const onSubmit = (values: z.infer<typeof loginSchema>) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const onSubmit = (_values: z.infer<typeof loginSchema>) => {
     form.clearErrors();
 
     // BYPASSING API CALL FOR TESTING - DIRECTLY REDIRECT TO DASHBOARD

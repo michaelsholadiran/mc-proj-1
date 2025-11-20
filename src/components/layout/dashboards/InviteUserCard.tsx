@@ -83,7 +83,8 @@ export default function InviteUserCard() {
     },
   });
 
-  const handleSubmit = async (values: InviteUserFormValues) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleSubmit = async (_values: InviteUserFormValues) => {
     setIsInvitingUser(true);
     
     // Simulate API call

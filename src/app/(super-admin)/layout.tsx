@@ -4,8 +4,9 @@ import { DM_Sans, Poppins } from "next/font/google";
 import { CSSProperties } from "react";
 import AppSidebar from "@/components/layout/sidebar";
 import HeaderDropdown from "@/components/layout/global/header";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+// COMMENTED OUT FOR TESTING
+// import { cookies } from "next/headers";
+// import { redirect } from "next/navigation";
 
 const dmSans = DM_Sans({
   variable: "--font-dm",

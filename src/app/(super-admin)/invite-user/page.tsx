@@ -117,7 +117,7 @@ export default function InviteUserPage() {
 
   // Mock data
   const allUsers = generateMockUsers();
-  const totalPages = Math.ceil(allUsers.length / 10);
+  // const totalPages = Math.ceil(allUsers.length / 10); // Not used, calculated in mockUsersData
 
   // Filter data based on filters
   const filteredUsers = allUsers.filter((user) => {
@@ -155,9 +155,13 @@ export default function InviteUserPage() {
       pageNumber: currentPage,
       pageSize: 10,
     },
+    isSuccessful: true,
+    message: "Success",
+    code: "200",
   };
 
-  const handleCreateUser = (values: InviteUserFormValues) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleCreateUser = (_values: InviteUserFormValues) => {
     setIsInvitingUser(true);
     
     // Simulate API call
