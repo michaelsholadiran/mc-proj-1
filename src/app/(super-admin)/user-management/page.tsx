@@ -391,7 +391,7 @@ function UserManagementPageContent() {
               }}
             >
               <DialogTrigger asChild>
-                <Button className="cursor-pointer bg-[#0284B2] rounded-[5px] h-[48px] px-[20px] hover:bg-[#0284B2] font-[family-name:var(--font-poppins)] text-[14px]">
+                <Button disabled className="cursor-pointer bg-[#0284B2] rounded-[5px] h-[48px] px-[20px] hover:bg-[#0284B2] font-[family-name:var(--font-poppins)] text-[14px]">
                   <Plus />
                   Create User
                 </Button>
@@ -588,7 +588,7 @@ function UserManagementPageContent() {
                       <Button
                         type="submit"
                         className="h-[58px] float-right mt-8 rounded-[8px] bg-[#0284B2] py-[16px] px-[12px] cursor-pointer hover:bg-[#0284B2] font-[family-name:var(--font-poppins)] text-white flex items-center gap-2"
-                        disabled={isInvitingUser}
+                        disabled={true}
                       >
                         {isInvitingUser && (
                           <Loader2 className="animate-spin w-5 h-5" />

@@ -24,6 +24,7 @@ export type PaymentSummaryData = {
   transactionId: string;
   accountNumber: string;
   accountName: string;
+  registrationId: string;
   amount: string;
   channel: string;
   status: string;
@@ -68,15 +69,15 @@ export function PaymentSummaryTable(props: DataTableProps) {
       ),
     },
     {
-      accessorKey: "accountNumber",
-      header: () => <div className="font-medium">Account Number</div>,
+      accessorKey: "registrationId",
+      header: () => <div className="font-medium">Registration ID/ Matric Number</div>,
       cell: ({ row }) => (
-        <div>{row.getValue("accountNumber")}</div>
+        <div>{row.getValue("registrationId")}</div>
       ),
     },
     {
       accessorKey: "accountName",
-      header: () => <div className="font-medium">Account Name</div>,
+      header: () => <div className="font-medium">Student Name</div>,
       cell: ({ row }) => (
         <div>{row.getValue("accountName")}</div>
       ),
@@ -92,13 +93,6 @@ export function PaymentSummaryTable(props: DataTableProps) {
           </div>
         );
       },
-    },
-    {
-      accessorKey: "channel",
-      header: () => <div className="font-medium">Channel</div>,
-      cell: ({ row }) => (
-        <div>{row.getValue("channel")}</div>
-      ),
     },
     {
       accessorKey: "status",

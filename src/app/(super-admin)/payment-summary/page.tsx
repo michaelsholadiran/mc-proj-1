@@ -43,7 +43,8 @@ const generateMockPaymentData = (): PaymentSummaryData[] => {
       id: `pay-${i}`,
       transactionId: `TXN${String(i).padStart(8, '0')}`,
       accountNumber: `123456789${String(i).padStart(2, '0')}`,
-      accountName: `Customer ${i}`,
+      accountName: `Student ${i}`,
+      registrationId: `REG${String(i).padStart(6, '0')}`,
       amount: `₦${(Math.random() * 100000 + 1000).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`,
       channel: channels[Math.floor(Math.random() * channels.length)],
       status: statuses[Math.floor(Math.random() * statuses.length)],
@@ -56,8 +57,8 @@ const generateMockPaymentData = (): PaymentSummaryData[] => {
 };
 
 export default function PaymentSummaryPage() {
-  const [searchKeyword, setSearchKeyword] = useState("");
-  const [channelFilter, setChannelFilter] = useState("all");
+  const [studentNameSearch, setStudentNameSearch] = useState("");
+  const [registrationIdSearch, setRegistrationIdSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateRangeFilter, setDateRangeFilter] = useState<{from: Date, to?: Date} | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
@@ -69,10 +70,10 @@ export default function PaymentSummaryPage() {
 
   // Filter data based on filters
   const filteredPayments = allPayments.filter((payment) => {
-    if (searchKeyword && !payment.accountNumber.includes(searchKeyword) && !payment.transactionId.includes(searchKeyword)) {
+    if (studentNameSearch && !payment.accountName.toLowerCase().includes(studentNameSearch.toLowerCase())) {
       return false;
     }
-    if (channelFilter !== "all" && payment.channel !== channelFilter) {
+    if (registrationIdSearch && !payment.registrationId.toLowerCase().includes(registrationIdSearch.toLowerCase())) {
       return false;
     }
     if (statusFilter !== "all" && payment.status !== statusFilter) {
@@ -85,9 +86,7 @@ export default function PaymentSummaryPage() {
   const paginatedPayments = filteredPayments.slice((currentPage - 1) * 10, currentPage * 10);
 
   const handleFilterChange = (filterType: string, value: string) => {
-    if (filterType === "channel") {
-      setChannelFilter(value);
-    } else if (filterType === "status") {
+    if (filterType === "status") {
       setStatusFilter(value);
     }
     setCurrentPage(1);
@@ -156,10 +155,10 @@ export default function PaymentSummaryPage() {
 
       {/* Content */}
       <div className="mt-[20px]">
-        <div className="flex flex-col lg:grid lg:grid-cols-5 gap-3 items-center py-4 mb-[20px]">
+        <div className="flex flex-col lg:grid lg:grid-cols-4 gap-3 items-center py-4 mb-[20px]">
           <div className="w-full lg:col-span-1 grid items-center gap-2">
-            <Label htmlFor="accountNumber" className="text-left block">
-              Account Number
+            <Label htmlFor="studentName" className="text-left block">
+              Student Name
             </Label>
             <div className="relative w-full">
               <Search
@@ -167,15 +166,15 @@ export default function PaymentSummaryPage() {
                 size={20}
               />
               <Input
-                id="accountNumber"
-                placeholder="Enter account number"
-                value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
+                id="studentName"
+                placeholder="Enter student name"
+                value={studentNameSearch}
+                onChange={(e) => setStudentNameSearch(e.target.value)}
                 className="w-full h-[50px] focus-visible:ring-0 rounded-[8px] placeholder:text-[#A9A9A9] font-[family-name:var(--font-poppins)] pl-[35px] pr-[40px] font-[500] border-[#CCCCCC80] focus-visible:border-[#CCCCCC80]"
               />
-              {searchKeyword && (
+              {studentNameSearch && (
                 <button
-                  onClick={() => setSearchKeyword("")}
+                  onClick={() => setStudentNameSearch("")}
                   className="absolute top-4 right-2 text-white bg-[#6B7280] hover:bg-[#4B5563] rounded-full p-1 transition-colors"
                   type="button"
                 >
@@ -186,19 +185,31 @@ export default function PaymentSummaryPage() {
           </div>
 
           <div className="w-full lg:col-span-1 grid items-center gap-2">
-            <Label htmlFor="channel" className="text-left block">
-              Channel
+            <Label htmlFor="registrationId" className="text-left block">
+              Registration ID/ Matric Number
             </Label>
-            <select
-              value={channelFilter}
-              onChange={(e) => handleFilterChange("channel", e.target.value)}
-              className="h-[50px] w-full px-3 font-[family-name:var(--font-poppins)] text-[#3D4F5C] border border-[#CCCCCC80] rounded-[8px] focus:outline-none focus:ring-1 focus:ring-[#0284B2]"
-            >
-              <option value="all">All Channels</option>
-              <option value="Mobile">Mobile</option>
-              <option value="iBank">iBank</option>
-              <option value="ATM">ATM</option>
-            </select>
+            <div className="relative w-full">
+              <Search
+                className="text-[#A9A9A9] absolute top-4 left-2"
+                size={20}
+              />
+              <Input
+                id="registrationId"
+                placeholder="Enter registration ID/ matric number"
+                value={registrationIdSearch}
+                onChange={(e) => setRegistrationIdSearch(e.target.value)}
+                className="w-full h-[50px] focus-visible:ring-0 rounded-[8px] placeholder:text-[#A9A9A9] font-[family-name:var(--font-poppins)] pl-[35px] pr-[40px] font-[500] border-[#CCCCCC80] focus-visible:border-[#CCCCCC80]"
+              />
+              {registrationIdSearch && (
+                <button
+                  onClick={() => setRegistrationIdSearch("")}
+                  className="absolute top-4 right-2 text-white bg-[#6B7280] hover:bg-[#4B5563] rounded-full p-1 transition-colors"
+                  type="button"
+                >
+                  <XIcon size={12} />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="w-full lg:col-span-1 grid items-center gap-2">
@@ -217,7 +228,7 @@ export default function PaymentSummaryPage() {
             </select>
           </div>
 
-          <div className="w-full lg:col-span-2 grid items-center gap-2">
+          <div className="w-full lg:col-span-1 grid items-center gap-2">
             <Label htmlFor="dateRange" className="text-left block">
               Date Range
             </Label>

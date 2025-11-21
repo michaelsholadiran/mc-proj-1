@@ -39,12 +39,12 @@ export const sidebarLinks: SidebarLink[] = [
     icon: DollarSign as ComponentType<React.ComponentProps<"svg">>,
     roles: ["Super Admin"],
   },
-  {
-    title: "Verify Payment",
-    url: "/verify-payment",
-    icon: Shield as ComponentType<React.ComponentProps<"svg">>,
-    roles: ["Super Admin"],
-  },
+  // {
+  //   title: "Verify Payment",
+  //   url: "/verify-payment",
+  //   icon: Shield as ComponentType<React.ComponentProps<"svg">>,
+  //   roles: ["Super Admin"],
+  // },
   // ALL OTHER LINKS COMMENTED OUT FOR TESTING
   // {
   //   title: "Dashboard",
