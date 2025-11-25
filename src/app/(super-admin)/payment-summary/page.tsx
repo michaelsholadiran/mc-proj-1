@@ -113,18 +113,35 @@ function PaymentSummaryPageContent() {
     const paymentLogs = paymentHistoryData?.data?.paymentLogs || [];
     return paymentLogs.filter((log) => {
       if (studentNameSearch && !log.fullName.toLowerCase().includes(studentNameSearch.toLowerCase())) {
-      return false;
-    }
+        return false;
+      }
+      if (registrationIdSearch && !log.studentReference.toLowerCase().includes(registrationIdSearch.toLowerCase())) {
+        return false;
+      }
       if (statusFilter !== "all") {
         const logStatus = log.status.toLowerCase();
         const filterStatus = statusFilter.toLowerCase();
         if (logStatus !== filterStatus) {
-      return false;
+          return false;
         }
-    }
-    return true;
-  });
-  }, [paymentHistoryData?.data?.paymentLogs, studentNameSearch, statusFilter]);
+      }
+      // Date range filter
+      if (dateRangeFilter?.from || dateRangeFilter?.to) {
+        const logDate = new Date(log.financialDate);
+        if (dateRangeFilter.from && logDate < dateRangeFilter.from) {
+          return false;
+        }
+        if (dateRangeFilter.to) {
+          const toDate = new Date(dateRangeFilter.to);
+          toDate.setHours(23, 59, 59, 999); // Include the entire end date
+          if (logDate > toDate) {
+            return false;
+          }
+        }
+      }
+      return true;
+    });
+  }, [paymentHistoryData?.data?.paymentLogs, studentNameSearch, registrationIdSearch, statusFilter, dateRangeFilter]);
 
   // Paginate payment logs
   const itemsPerPage = 10;

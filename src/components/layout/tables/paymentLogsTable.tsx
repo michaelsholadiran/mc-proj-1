@@ -58,10 +58,13 @@ export function PaymentLogsTable(props: PaymentLogsTableProps) {
         <Table className="w-full text-left text-gray-500 rounded-t-lg">
           <TableHeader className="text-gray-700 bg-[#F0FCFF] sticky top-0 z-10">
             <TableRow className="border-0 hover:!bg-[#F0FCFF]">
+              <TableHead className="px-[20px] py-[20px] font-medium">ID</TableHead>
               <TableHead className="px-[20px] py-[20px] font-medium">Date</TableHead>
+              <TableHead className="px-[20px] py-[20px] font-medium">Description</TableHead>
               <TableHead className="px-[20px] py-[20px] font-medium">Student Name</TableHead>
-              <TableHead className="px-[20px] py-[20px] font-medium">Student Reference</TableHead>
+              <TableHead className="px-[20px] py-[20px] font-medium">Registration ID/ Matric Number</TableHead>
               <TableHead className="px-[20px] py-[20px] font-medium">Payment Reference</TableHead>
+              <TableHead className="px-[20px] py-[20px] font-medium">Payment ID</TableHead>
               <TableHead className="px-[20px] py-[20px] font-medium">Amount</TableHead>
               <TableHead className="px-[20px] py-[20px] font-medium">Commission</TableHead>
               <TableHead className="px-[20px] py-[20px] font-medium">Status</TableHead>
@@ -71,7 +74,7 @@ export function PaymentLogsTable(props: PaymentLogsTableProps) {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, index) => (
                 <TableRow key={index} className="even:bg-[#FCFCFC] w-full border-0">
-                  {Array.from({ length: 7 }).map((_, cellIndex) => (
+                  {Array.from({ length: 10 }).map((_, cellIndex) => (
                     <TableCell
                       key={cellIndex}
                       className="px-[20px] py-[10px] text-[#464646] font-[family-name:var(--font-poppins)] font-[500]"
@@ -88,7 +91,13 @@ export function PaymentLogsTable(props: PaymentLogsTableProps) {
                   className="even:bg-[#FCFCFC] w-full border-0 hover:bg-gray-50"
                 >
                   <TableCell className="px-[20px] py-[20px] text-[#464646] font-[family-name:var(--font-poppins)] font-[500]">
+                    {log.id}
+                  </TableCell>
+                  <TableCell className="px-[20px] py-[20px] text-[#464646] font-[family-name:var(--font-poppins)] font-[500]">
                     {formatDate(log.financialDate)}
+                  </TableCell>
+                  <TableCell className="px-[20px] py-[20px] text-[#464646] font-[family-name:var(--font-poppins)] font-[500]">
+                    {log.description}
                   </TableCell>
                   <TableCell className="px-[20px] py-[20px] text-[#464646] font-[family-name:var(--font-poppins)] font-[500]">
                     {log.fullName}
@@ -98,6 +107,9 @@ export function PaymentLogsTable(props: PaymentLogsTableProps) {
                   </TableCell>
                   <TableCell className="px-[20px] py-[20px] text-[#464646] font-[family-name:var(--font-poppins)] font-[500]">
                     {log.paymentReference}
+                  </TableCell>
+                  <TableCell className="px-[20px] py-[20px] text-[#0284B2] font-[family-name:var(--font-poppins)] font-[500]">
+                    {log.paymentId}
                   </TableCell>
                   <TableCell className="px-[20px] py-[20px] text-[#464646] font-[family-name:var(--font-poppins)] font-semibold">
                     {formatAmount(log.amount)}
@@ -115,7 +127,7 @@ export function PaymentLogsTable(props: PaymentLogsTableProps) {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={10}
                   className="h-24 text-center font-[family-name:var(--font-poppins)] px-[20px] py-[10px]"
                 >
                   No payment logs found.
