@@ -17,7 +17,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import DatePickerWithRange from "@/components/ui/date-picker-with-range";
 import {
@@ -28,66 +28,117 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { PaymentSummaryTable, PaymentSummaryData } from "@/components/layout/tables/paymentSummaryTable";
-
-// Mock data for payment summary
-const generateMockPaymentData = (): PaymentSummaryData[] => {
-  const statuses = ["Successful", "Pending", "Failed"];
-  const channels = ["Mobile", "iBank", "ATM"];
-  const data: PaymentSummaryData[] = [];
-
-  for (let i = 1; i <= 25; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() - Math.floor(Math.random() * 30));
-    
-    data.push({
-      id: `pay-${i}`,
-      transactionId: `TXN${String(i).padStart(8, '0')}`,
-      accountNumber: `123456789${String(i).padStart(2, '0')}`,
-      accountName: `Student ${i}`,
-      registrationId: `REG${String(i).padStart(6, '0')}`,
-      amount: `₦${(Math.random() * 100000 + 1000).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`,
-      channel: channels[Math.floor(Math.random() * channels.length)],
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-      date: date.toLocaleDateString('en-NG', { year: 'numeric', month: '2-digit', day: '2-digit' }),
-      referenceNumber: `REF${String(i).padStart(10, '0')}`,
-    });
-  }
-
-  return data;
-};
+import { useGetPaymentsMappedQuery } from "@/query-options/paymentsQueryOption";
+import { PaymentQueryParams } from "@/types/payments";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function PaymentSummaryPage() {
-  const [studentNameSearch, setStudentNameSearch] = useState("");
-  const [registrationIdSearch, setRegistrationIdSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [dateRangeFilter, setDateRangeFilter] = useState<{from: Date, to?: Date} | undefined>(undefined);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Initialize state from URL params
+  const [studentNameSearch, setStudentNameSearch] = useState(
+    searchParams.get("studentName") || ""
+  );
+  const [registrationIdSearch, setRegistrationIdSearch] = useState(
+    searchParams.get("registrationId") || ""
+  );
+  const [statusFilter, setStatusFilter] = useState(
+    searchParams.get("status") || "all"
+  );
+  const [paymentTypeFilter, setPaymentTypeFilter] = useState(
+    searchParams.get("paymentType") || "all"
+  );
+  const [dateRangeFilter, setDateRangeFilter] = useState<{from: Date, to?: Date} | undefined>(
+    (() => {
+      const from = searchParams.get("from");
+      const to = searchParams.get("to");
+      if (from && to) {
+        return {
+          from: new Date(from),
+          to: new Date(to)
+        };
+      }
+      return undefined;
+    })()
+  );
+  const [currentPage, setCurrentPage] = useState(
+    parseInt(searchParams.get("page") || "1")
+  );
+  
+  // API filter states - initialize from URL params
+  const [paymentIdFilter, setPaymentIdFilter] = useState(
+    searchParams.get("paymentId") || ""
+  );
+  const [minAmountFilter, setMinAmountFilter] = useState(
+    searchParams.get("minAmount") || ""
+  );
+  const [maxAmountFilter, setMaxAmountFilter] = useState(
+    searchParams.get("maxAmount") || ""
+  );
+  const [walletIdFilter, setWalletIdFilter] = useState(
+    searchParams.get("walletId") || ""
+  );
 
-  // Mock data
-  const allPayments = generateMockPaymentData();
-  const totalPages = Math.ceil(allPayments.length / 10);
-
-  // Filter data based on filters
-  const filteredPayments = allPayments.filter((payment) => {
-    if (studentNameSearch && !payment.accountName.toLowerCase().includes(studentNameSearch.toLowerCase())) {
-      return false;
+  // Build API query parameters
+  const queryParams: PaymentQueryParams = useMemo(() => {
+    const params: PaymentQueryParams = {};
+    
+    if (paymentIdFilter.trim()) params.PaymentId = paymentIdFilter.trim();
+    // Map Registration ID/Matric Number to SchoolId
+    if (registrationIdSearch.trim()) params.SchoolId = registrationIdSearch.trim();
+    if (walletIdFilter.trim()) params.WalletId = walletIdFilter.trim();
+    if (minAmountFilter.trim()) {
+      const minAmount = parseFloat(minAmountFilter.trim());
+      if (!isNaN(minAmount)) params.MinAmount = minAmount;
     }
-    if (registrationIdSearch && !payment.registrationId.toLowerCase().includes(registrationIdSearch.toLowerCase())) {
+    if (maxAmountFilter.trim()) {
+      const maxAmount = parseFloat(maxAmountFilter.trim());
+      if (!isNaN(maxAmount)) params.MaxAmount = maxAmount;
+    }
+    if (dateRangeFilter?.from) {
+      params.From = dateRangeFilter.from.toISOString().split('T')[0];
+    }
+    if (dateRangeFilter?.to) {
+      params.To = dateRangeFilter.to.toISOString().split('T')[0];
+    }
+    
+    return params;
+  }, [paymentIdFilter, registrationIdSearch, walletIdFilter, minAmountFilter, maxAmountFilter, dateRangeFilter]);
+
+  // Fetch payments from API
+  const { data: paymentsData, isLoading, error } = useGetPaymentsMappedQuery(queryParams);
+
+  // Get all payments from API response
+  const allPayments = paymentsData?.payments || [];
+
+  // Client-side filtering for student name, status, and payment type
+  // Note: Registration ID is now used as SchoolId API filter
+  const filteredPayments = useMemo(() => {
+    return allPayments.filter((payment) => {
+    if (studentNameSearch && !payment.accountName.toLowerCase().includes(studentNameSearch.toLowerCase())) {
       return false;
     }
     if (statusFilter !== "all" && payment.status !== statusFilter) {
       return false;
     }
+      if (paymentTypeFilter !== "all" && payment.paymentType !== paymentTypeFilter) {
+      return false;
+    }
     return true;
   });
+  }, [allPayments, studentNameSearch, statusFilter, paymentTypeFilter]);
 
   // Paginate data
-  const paginatedPayments = filteredPayments.slice((currentPage - 1) * 10, currentPage * 10);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
+  const paginatedPayments = filteredPayments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleFilterChange = (filterType: string, value: string) => {
     if (filterType === "status") {
       setStatusFilter(value);
+    } else if (filterType === "paymentType") {
+      setPaymentTypeFilter(value);
     }
     setCurrentPage(1);
   };
@@ -95,6 +146,60 @@ export default function PaymentSummaryPage() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
+
+  // Update URL when filters change
+  const updateURL = useCallback(() => {
+    const newSearchParams = new URLSearchParams();
+    
+    // API filters
+    if (paymentIdFilter.trim()) newSearchParams.set("paymentId", paymentIdFilter.trim());
+    if (registrationIdSearch.trim()) newSearchParams.set("registrationId", registrationIdSearch.trim());
+    if (walletIdFilter.trim()) newSearchParams.set("walletId", walletIdFilter.trim());
+    if (minAmountFilter.trim()) newSearchParams.set("minAmount", minAmountFilter.trim());
+    if (maxAmountFilter.trim()) newSearchParams.set("maxAmount", maxAmountFilter.trim());
+    
+    // Client-side filters
+    if (studentNameSearch.trim()) newSearchParams.set("studentName", studentNameSearch.trim());
+    if (statusFilter !== "all") newSearchParams.set("status", statusFilter);
+    if (paymentTypeFilter !== "all") newSearchParams.set("paymentType", paymentTypeFilter);
+    
+    // Date range
+    if (dateRangeFilter?.from) {
+      newSearchParams.set("from", dateRangeFilter.from.toISOString().split('T')[0]);
+    }
+    if (dateRangeFilter?.to) {
+      newSearchParams.set("to", dateRangeFilter.to.toISOString().split('T')[0]);
+    }
+    
+    // Page
+    if (currentPage > 1) newSearchParams.set("page", currentPage.toString());
+    
+    const queryString = newSearchParams.toString();
+    const newUrl = queryString ? `?${queryString}` : "";
+    router.replace(`/payment-summary${newUrl}`, { scroll: false });
+  }, [
+    router,
+    paymentIdFilter,
+    registrationIdSearch,
+    walletIdFilter,
+    minAmountFilter,
+    maxAmountFilter,
+    studentNameSearch,
+    statusFilter,
+    paymentTypeFilter,
+    dateRangeFilter,
+    currentPage
+  ]);
+
+  // Update URL when any filter changes
+  useEffect(() => {
+    updateURL();
+  }, [updateURL]);
+
+  // Handle errors
+  if (error) {
+    console.error("Error fetching payments:", error);
+  }
 
   return (
     <div className="px-[1rem] md:px-[2rem]">
@@ -155,7 +260,113 @@ export default function PaymentSummaryPage() {
 
       {/* Content */}
       <div className="mt-[20px]">
-        <div className="flex flex-col lg:grid lg:grid-cols-4 gap-3 items-center py-4 mb-[20px]">
+        <div className="flex flex-col lg:grid lg:grid-cols-5 gap-3 items-center py-4 mb-[20px]">
+          {/* API Filters Row 1 */}
+          <div className="w-full lg:col-span-1 grid items-center gap-2">
+            <Label htmlFor="paymentId" className="text-left block">
+              Payment ID
+            </Label>
+            <div className="relative w-full">
+              <Search
+                className="text-[#A9A9A9] absolute top-4 left-2"
+                size={20}
+              />
+              <Input
+                id="paymentId"
+                placeholder="Enter payment ID"
+                value={paymentIdFilter}
+                onChange={(e) => {
+                  setPaymentIdFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full h-[50px] focus-visible:ring-0 rounded-[8px] placeholder:text-[#A9A9A9] font-[family-name:var(--font-poppins)] pl-[35px] pr-[40px] font-[500] border-[#CCCCCC80] focus-visible:border-[#CCCCCC80]"
+              />
+              {paymentIdFilter && (
+                <button
+                  onClick={() => {
+                    setPaymentIdFilter("");
+                    setCurrentPage(1);
+                  }}
+                  className="absolute top-4 right-2 text-white bg-[#6B7280] hover:bg-[#4B5563] rounded-full p-1 transition-colors"
+                  type="button"
+                >
+                  <XIcon size={12} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="w-full lg:col-span-1 grid items-center gap-2">
+            <Label htmlFor="walletId" className="text-left block">
+              Wallet ID
+            </Label>
+            <div className="relative w-full">
+              <Search
+                className="text-[#A9A9A9] absolute top-4 left-2"
+                size={20}
+              />
+              <Input
+                id="walletId"
+                placeholder="Enter wallet ID"
+                value={walletIdFilter}
+                onChange={(e) => {
+                  setWalletIdFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full h-[50px] focus-visible:ring-0 rounded-[8px] placeholder:text-[#A9A9A9] font-[family-name:var(--font-poppins)] pl-[35px] pr-[40px] font-[500] border-[#CCCCCC80] focus-visible:border-[#CCCCCC80]"
+              />
+              {walletIdFilter && (
+                <button
+                  onClick={() => {
+                    setWalletIdFilter("");
+                    setCurrentPage(1);
+                  }}
+                  className="absolute top-4 right-2 text-white bg-[#6B7280] hover:bg-[#4B5563] rounded-full p-1 transition-colors"
+                  type="button"
+                >
+                  <XIcon size={12} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="w-full lg:col-span-1 grid items-center gap-2">
+            <Label htmlFor="minAmount" className="text-left block">
+              Min Amount
+            </Label>
+            <Input
+              id="minAmount"
+              type="number"
+              placeholder="Enter min amount"
+              value={minAmountFilter}
+              onChange={(e) => {
+                setMinAmountFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full h-[50px] focus-visible:ring-0 rounded-[8px] placeholder:text-[#A9A9A9] font-[family-name:var(--font-poppins)] px-3 font-[500] border-[#CCCCCC80] focus-visible:border-[#CCCCCC80]"
+            />
+          </div>
+
+          <div className="w-full lg:col-span-1 grid items-center gap-2">
+            <Label htmlFor="maxAmount" className="text-left block">
+              Max Amount
+            </Label>
+            <Input
+              id="maxAmount"
+              type="number"
+              placeholder="Enter max amount"
+              value={maxAmountFilter}
+              onChange={(e) => {
+                setMaxAmountFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full h-[50px] focus-visible:ring-0 rounded-[8px] placeholder:text-[#A9A9A9] font-[family-name:var(--font-poppins)] px-3 font-[500] border-[#CCCCCC80] focus-visible:border-[#CCCCCC80]"
+            />
+          </div>
+        </div>
+
+        {/* Client-side Filters Row 2 */}
+        <div className="flex flex-col lg:grid lg:grid-cols-5 gap-3 items-center py-4 mb-[20px]">
           <div className="w-full lg:col-span-1 grid items-center gap-2">
             <Label htmlFor="studentName" className="text-left block">
               Student Name
@@ -169,12 +380,18 @@ export default function PaymentSummaryPage() {
                 id="studentName"
                 placeholder="Enter student name"
                 value={studentNameSearch}
-                onChange={(e) => setStudentNameSearch(e.target.value)}
+                onChange={(e) => {
+                  setStudentNameSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="w-full h-[50px] focus-visible:ring-0 rounded-[8px] placeholder:text-[#A9A9A9] font-[family-name:var(--font-poppins)] pl-[35px] pr-[40px] font-[500] border-[#CCCCCC80] focus-visible:border-[#CCCCCC80]"
               />
               {studentNameSearch && (
                 <button
-                  onClick={() => setStudentNameSearch("")}
+                  onClick={() => {
+                    setStudentNameSearch("");
+                    setCurrentPage(1);
+                  }}
                   className="absolute top-4 right-2 text-white bg-[#6B7280] hover:bg-[#4B5563] rounded-full p-1 transition-colors"
                   type="button"
                 >
@@ -197,12 +414,18 @@ export default function PaymentSummaryPage() {
                 id="registrationId"
                 placeholder="Enter registration ID/ matric number"
                 value={registrationIdSearch}
-                onChange={(e) => setRegistrationIdSearch(e.target.value)}
+                onChange={(e) => {
+                  setRegistrationIdSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="w-full h-[50px] focus-visible:ring-0 rounded-[8px] placeholder:text-[#A9A9A9] font-[family-name:var(--font-poppins)] pl-[35px] pr-[40px] font-[500] border-[#CCCCCC80] focus-visible:border-[#CCCCCC80]"
               />
               {registrationIdSearch && (
                 <button
-                  onClick={() => setRegistrationIdSearch("")}
+                  onClick={() => {
+                    setRegistrationIdSearch("");
+                    setCurrentPage(1);
+                  }}
                   className="absolute top-4 right-2 text-white bg-[#6B7280] hover:bg-[#4B5563] rounded-full p-1 transition-colors"
                   type="button"
                 >
@@ -229,12 +452,33 @@ export default function PaymentSummaryPage() {
           </div>
 
           <div className="w-full lg:col-span-1 grid items-center gap-2">
+            <Label htmlFor="paymentType" className="text-left block">
+              Payment Type
+            </Label>
+            <select
+              value={paymentTypeFilter}
+              onChange={(e) => handleFilterChange("paymentType", e.target.value)}
+              className="h-[50px] w-full px-3 font-[family-name:var(--font-poppins)] text-[#3D4F5C] border border-[#CCCCCC80] rounded-[8px] focus:outline-none focus:ring-1 focus:ring-[#0284B2]"
+            >
+              <option value="all">All Payment Types</option>
+              <option value="Tuition">Tuition</option>
+              <option value="Registration">Registration</option>
+              <option value="Hostel">Hostel</option>
+              <option value="Library">Library</option>
+              <option value="Medical">Medical</option>
+            </select>
+          </div>
+
+          <div className="w-full lg:col-span-1 grid items-center gap-2">
             <Label htmlFor="dateRange" className="text-left block">
               Date Range
             </Label>
             <DatePickerWithRange
               value={dateRangeFilter}
-              onChange={setDateRangeFilter}
+              onChange={(value) => {
+                setDateRangeFilter(value);
+                setCurrentPage(1);
+              }}
               placeholder="Select date range"
               className="h-[50px] font-[family-name:var(--font-poppins)] text-[#3D4F5C] flex items-center"
             />
