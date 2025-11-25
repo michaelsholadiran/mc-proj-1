@@ -18,7 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useRouter } from "next/navigation";
 
 export type PaymentSummaryData = {
   id: string;
@@ -50,11 +49,6 @@ interface DataTableProps {
 
 export function PaymentSummaryTable(props: DataTableProps) {
   const { data, isLoading, onPageChange, currentPage, totalPages } = props;
-  const router = useRouter();
-
-  const handleRowClick = (paymentId: string) => {
-    router.push(`/payment-summary/${paymentId}`);
-  };
 
   const columns: ColumnDef<PaymentSummaryData>[] = [
     {
@@ -235,29 +229,25 @@ export function PaymentSummaryTable(props: DataTableProps) {
                 </TableRow>
               ))
             ) : data.length ? (
-              table.getRowModel().rows.map((row) => {
-                const payment = row.original;
-                return (
-                  <TableRow
-                    key={row.id}
-                    className="even:bg-[#FCFCFC] w-full border-0 hover:bg-gray-50 cursor-pointer"
-                    data-state={row.getIsSelected() && "selected"}
-                    onClick={() => handleRowClick(payment.id)}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell
-                        key={cell.id}
-                        className="px-[20px] py-[20px] text-[#464646] font-[family-name:var(--font-poppins)] font-[500]"
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                );
-              })
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  className="even:bg-[#FCFCFC] w-full border-0 hover:bg-gray-50"
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell
+                      key={cell.id}
+                      className="px-[20px] py-[20px] text-[#464646] font-[family-name:var(--font-poppins)] font-[500]"
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : (
               <TableRow>
                 <TableCell

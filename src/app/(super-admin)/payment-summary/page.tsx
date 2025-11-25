@@ -27,11 +27,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { PaymentSummaryTable } from "@/components/layout/tables/paymentSummaryTable";
-import { useGetPaymentsMappedQuery } from "@/query-options/paymentsQueryOption";
+import { PaymentLogsTable } from "@/components/layout/tables/paymentLogsTable";
+import { useGetPaymentsMappedQuery, useGetPaymentWithHistoryQuery, useGetPaymentsQuery } from "@/query-options/paymentsQueryOption";
 import { PaymentQueryParams } from "@/types/payments";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
 // import { Skeleton } from "@/components/ui/skeleton";
 
 function PaymentSummaryPageContent() {
@@ -50,6 +51,9 @@ function PaymentSummaryPageContent() {
   );
   const [paymentTypeFilter, setPaymentTypeFilter] = useState(
     searchParams.get("paymentType") || "all"
+  );
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(
+    null
   );
   const [dateRangeFilter, setDateRangeFilter] = useState<{from: Date, to?: Date} | undefined>(
     (() => {
@@ -90,31 +94,71 @@ function PaymentSummaryPageContent() {
     return params;
   }, [paymentIdFilter, registrationIdSearch, dateRangeFilter]);
 
-  // Fetch payments from API
-  const { data: paymentsData, isLoading, error } = useGetPaymentsMappedQuery(queryParams);
+  // Fetch all payments to get payment types for dropdown (use original API response)
+  const { data: allPaymentsResponse } = useGetPaymentsQuery({});
+  
+  // Get unique payment types from API
+  const paymentTypes = useMemo(() => {
+    if (!allPaymentsResponse?.data?.items) return [];
+    const uniqueTypes = new Set<string>();
+    allPaymentsResponse.data.items.forEach((payment) => {
+      if (payment.description) {
+        uniqueTypes.add(payment.description);
+      }
+    });
+    return Array.from(uniqueTypes).sort();
+  }, [allPaymentsResponse?.data?.items]);
 
-  // Client-side filtering for student name, status, and payment type
-  // Note: Registration ID is now used as SchoolId API filter
-  const filteredPayments = useMemo(() => {
-    const allPayments = paymentsData?.payments || [];
-    return allPayments.filter((payment) => {
-    if (studentNameSearch && !payment.accountName.toLowerCase().includes(studentNameSearch.toLowerCase())) {
-      return false;
+  // Find payment ID when payment type is selected
+  useEffect(() => {
+    if (paymentTypeFilter !== "all" && allPaymentsResponse?.data?.items) {
+      // Find the first payment with matching description
+      const payment = allPaymentsResponse.data.items.find(
+        (p) => p.description === paymentTypeFilter
+      );
+      if (payment) {
+        setSelectedPaymentId(payment.id);
+      } else {
+        setSelectedPaymentId(null);
+      }
+    } else {
+      setSelectedPaymentId(null);
     }
-    if (statusFilter !== "all" && payment.status !== statusFilter) {
-      return false;
-    }
-      if (paymentTypeFilter !== "all" && payment.paymentType !== paymentTypeFilter) {
-      return false;
-    }
-    return true;
-  });
-  }, [paymentsData?.payments, studentNameSearch, statusFilter, paymentTypeFilter]);
+  }, [paymentTypeFilter, allPaymentsResponse?.data?.items]);
 
-  // Paginate data
+  // Fetch payment with history when payment type is selected
+  const { data: paymentHistoryData, isLoading: isLoadingHistory, error: historyError } = useGetPaymentWithHistoryQuery(
+    selectedPaymentId || ""
+  );
+
+  // Get payment logs
+  const paymentLogs = paymentHistoryData?.data?.paymentLogs || [];
+  
+  // Client-side filtering for payment logs
+  const filteredLogs = useMemo(() => {
+    return paymentLogs.filter((log) => {
+      if (studentNameSearch && !log.fullName.toLowerCase().includes(studentNameSearch.toLowerCase())) {
+        return false;
+      }
+      if (statusFilter !== "all") {
+        const logStatus = log.status.toLowerCase();
+        const filterStatus = statusFilter.toLowerCase();
+        if (logStatus !== filterStatus) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [paymentLogs, studentNameSearch, statusFilter]);
+
+  // Paginate payment logs
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
-  const paginatedPayments = filteredPayments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  const paginatedLogs = filteredLogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Calculate totals from payment history
+  const totalAmount = paymentHistoryData?.data?.totalAmount || 0;
+  const totalCommission = paymentHistoryData?.data?.totalCommission || 0;
 
   const handleFilterChange = (filterType: string, value: string) => {
     if (filterType === "status") {
@@ -173,9 +217,14 @@ function PaymentSummaryPageContent() {
   }, [updateURL]);
 
   // Handle errors
-  if (error) {
-    console.error("Error fetching payments:", error);
+  if (historyError) {
+    console.error("Error fetching payment history:", historyError);
   }
+
+  // Format amount
+  const formatAmount = (amount: number) => {
+    return `₦${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+  };
 
   return (
     <div className="px-[1rem] md:px-[2rem]">
@@ -236,6 +285,36 @@ function PaymentSummaryPageContent() {
 
       {/* Content */}
       <div className="mt-[20px]">
+        {/* Total Amount and Commission Cards */}
+        {selectedPaymentId && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <Card className="border border-[#CCCCCC80] shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm font-[family-name:var(--font-poppins)] text-[#A9A9A9] font-medium">
+                    Total Amount
+                  </p>
+                  <p className="text-2xl font-bold font-[family-name:var(--font-dm)] text-[#464646]">
+                    {formatAmount(totalAmount)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border border-[#CCCCCC80] shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm font-[family-name:var(--font-poppins)] text-[#A9A9A9] font-medium">
+                    Total Commission
+                  </p>
+                  <p className="text-2xl font-bold font-[family-name:var(--font-dm)] text-[#464646]">
+                    {formatAmount(totalCommission)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* API Filters Row 1 */}
         <div className="flex flex-col lg:grid lg:grid-cols-5 gap-3 items-center py-4 mb-[20px]">
           <div className="w-full lg:col-span-1 grid items-center gap-2">
@@ -370,11 +449,11 @@ function PaymentSummaryPageContent() {
               className="h-[50px] w-full px-3 font-[family-name:var(--font-poppins)] text-[#3D4F5C] border border-[#CCCCCC80] rounded-[8px] focus:outline-none focus:ring-1 focus:ring-[#0284B2]"
             >
               <option value="all">All Payment Types</option>
-              <option value="Tuition">Tuition</option>
-              <option value="Registration">Registration</option>
-              <option value="Hostel">Hostel</option>
-              <option value="Library">Library</option>
-              <option value="Medical">Medical</option>
+              {paymentTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -394,13 +473,19 @@ function PaymentSummaryPageContent() {
           </div>
         </div>
         
-        <PaymentSummaryTable
-          data={paginatedPayments}
-          isLoading={isLoading}
-          onPageChange={handlePageChange}
-          currentPage={currentPage}
-          totalPages={totalPages}
-        />
+        {selectedPaymentId ? (
+          <PaymentLogsTable
+            data={paginatedLogs}
+            isLoading={isLoadingHistory}
+            onPageChange={handlePageChange}
+            currentPage={currentPage}
+            totalPages={totalPages}
+          />
+        ) : (
+          <div className="text-center py-12 font-[family-name:var(--font-poppins)] text-[#464646]">
+            Please select a Payment Type to view payment logs
+          </div>
+        )}
       </div>
     </div>
   );
