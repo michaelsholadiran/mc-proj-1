@@ -17,7 +17,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, Suspense } from "react";
 import { Input } from "@/components/ui/input";
 import DatePickerWithRange from "@/components/ui/date-picker-with-range";
 import {
@@ -31,8 +31,10 @@ import { PaymentSummaryTable } from "@/components/layout/tables/paymentSummaryTa
 import { useGetPaymentsMappedQuery } from "@/query-options/paymentsQueryOption";
 import { PaymentQueryParams } from "@/types/payments";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
+// import { Skeleton } from "@/components/ui/skeleton";
 
-export default function PaymentSummaryPage() {
+function PaymentSummaryPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -109,12 +111,10 @@ export default function PaymentSummaryPage() {
   // Fetch payments from API
   const { data: paymentsData, isLoading, error } = useGetPaymentsMappedQuery(queryParams);
 
-  // Get all payments from API response
-  const allPayments = paymentsData?.payments || [];
-
   // Client-side filtering for student name, status, and payment type
   // Note: Registration ID is now used as SchoolId API filter
   const filteredPayments = useMemo(() => {
+    const allPayments = paymentsData?.payments || [];
     return allPayments.filter((payment) => {
     if (studentNameSearch && !payment.accountName.toLowerCase().includes(studentNameSearch.toLowerCase())) {
       return false;
@@ -127,7 +127,7 @@ export default function PaymentSummaryPage() {
     }
     return true;
   });
-  }, [allPayments, studentNameSearch, statusFilter, paymentTypeFilter]);
+  }, [paymentsData?.payments, studentNameSearch, statusFilter, paymentTypeFilter]);
 
   // Paginate data
   const itemsPerPage = 10;
@@ -494,5 +494,27 @@ export default function PaymentSummaryPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function PaymentSummaryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="px-[1rem] md:px-[2rem]">
+          <div className="mt-[20px]">
+            <Skeleton className="h-8 w-64 mb-6" />
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-20" />
+              ))}
+            </div>
+            <Skeleton className="h-96" />
+          </div>
+        </div>
+      }
+    >
+      <PaymentSummaryPageContent />
+    </Suspense>
   );
 }
