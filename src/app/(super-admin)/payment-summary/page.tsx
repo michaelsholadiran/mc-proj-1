@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { PaymentSummaryTable, PaymentSummaryData } from "@/components/layout/tables/paymentSummaryTable";
+import { PaymentSummaryTable } from "@/components/layout/tables/paymentSummaryTable";
 import { useGetPaymentsMappedQuery } from "@/query-options/paymentsQueryOption";
 import { PaymentQueryParams } from "@/types/payments";
 import { useRouter, useSearchParams } from "next/navigation";
