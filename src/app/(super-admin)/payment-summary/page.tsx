@@ -28,8 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { PaymentLogsTable } from "@/components/layout/tables/paymentLogsTable";
-import { useGetPaymentsMappedQuery, useGetPaymentWithHistoryQuery, useGetPaymentsQuery } from "@/query-options/paymentsQueryOption";
-import { PaymentQueryParams } from "@/types/payments";
+import { useGetPaymentWithHistoryQuery, useGetPaymentsQuery } from "@/query-options/paymentsQueryOption";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
@@ -72,28 +71,6 @@ function PaymentSummaryPageContent() {
     parseInt(searchParams.get("page") || "1")
   );
   
-  // API filter states - initialize from URL params
-  const [paymentIdFilter, setPaymentIdFilter] = useState(
-    searchParams.get("paymentId") || ""
-  );
-
-  // Build API query parameters
-  const queryParams: PaymentQueryParams = useMemo(() => {
-    const params: PaymentQueryParams = {};
-    
-    if (paymentIdFilter.trim()) params.PaymentId = paymentIdFilter.trim();
-    // Map Registration ID/Matric Number to SchoolId
-    if (registrationIdSearch.trim()) params.SchoolId = registrationIdSearch.trim();
-    if (dateRangeFilter?.from) {
-      params.From = dateRangeFilter.from.toISOString().split('T')[0];
-    }
-    if (dateRangeFilter?.to) {
-      params.To = dateRangeFilter.to.toISOString().split('T')[0];
-    }
-    
-    return params;
-  }, [paymentIdFilter, registrationIdSearch, dateRangeFilter]);
-
   // Fetch all payments to get payment types for dropdown (use original API response)
   const { data: allPaymentsResponse } = useGetPaymentsQuery({});
   
@@ -130,26 +107,24 @@ function PaymentSummaryPageContent() {
   const { data: paymentHistoryData, isLoading: isLoadingHistory, error: historyError } = useGetPaymentWithHistoryQuery(
     selectedPaymentId || ""
   );
-
-  // Get payment logs
-  const paymentLogs = paymentHistoryData?.data?.paymentLogs || [];
   
   // Client-side filtering for payment logs
   const filteredLogs = useMemo(() => {
+    const paymentLogs = paymentHistoryData?.data?.paymentLogs || [];
     return paymentLogs.filter((log) => {
       if (studentNameSearch && !log.fullName.toLowerCase().includes(studentNameSearch.toLowerCase())) {
-        return false;
-      }
+      return false;
+    }
       if (statusFilter !== "all") {
         const logStatus = log.status.toLowerCase();
         const filterStatus = statusFilter.toLowerCase();
         if (logStatus !== filterStatus) {
-          return false;
+      return false;
         }
-      }
-      return true;
-    });
-  }, [paymentLogs, studentNameSearch, statusFilter]);
+    }
+    return true;
+  });
+  }, [paymentHistoryData?.data?.paymentLogs, studentNameSearch, statusFilter]);
 
   // Paginate payment logs
   const itemsPerPage = 10;
@@ -177,11 +152,8 @@ function PaymentSummaryPageContent() {
   const updateURL = useCallback(() => {
     const newSearchParams = new URLSearchParams();
     
-    // API filters
-    if (paymentIdFilter.trim()) newSearchParams.set("paymentId", paymentIdFilter.trim());
-    if (registrationIdSearch.trim()) newSearchParams.set("registrationId", registrationIdSearch.trim());
-    
     // Client-side filters
+    if (registrationIdSearch.trim()) newSearchParams.set("registrationId", registrationIdSearch.trim());
     if (studentNameSearch.trim()) newSearchParams.set("studentName", studentNameSearch.trim());
     if (statusFilter !== "all") newSearchParams.set("status", statusFilter);
     if (paymentTypeFilter !== "all") newSearchParams.set("paymentType", paymentTypeFilter);
@@ -202,7 +174,6 @@ function PaymentSummaryPageContent() {
     router.replace(`/payment-summary${newUrl}`, { scroll: false });
   }, [
     router,
-    paymentIdFilter,
     registrationIdSearch,
     studentNameSearch,
     statusFilter,
@@ -315,45 +286,7 @@ function PaymentSummaryPageContent() {
           </div>
         )}
 
-        {/* API Filters Row 1 */}
-        <div className="flex flex-col lg:grid lg:grid-cols-5 gap-3 items-center py-4 mb-[20px]">
-          <div className="w-full lg:col-span-1 grid items-center gap-2">
-            <Label htmlFor="paymentId" className="text-left block">
-              Payment ID
-            </Label>
-            <div className="relative w-full">
-              <Search
-                className="text-[#A9A9A9] absolute top-4 left-2"
-                size={20}
-              />
-              <Input
-                id="paymentId"
-                placeholder="Enter payment ID"
-                value={paymentIdFilter}
-                onChange={(e) => {
-                  setPaymentIdFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full h-[50px] focus-visible:ring-0 rounded-[8px] placeholder:text-[#A9A9A9] font-[family-name:var(--font-poppins)] pl-[35px] pr-[40px] font-[500] border-[#CCCCCC80] focus-visible:border-[#CCCCCC80]"
-              />
-              {paymentIdFilter && (
-                <button
-                  onClick={() => {
-                    setPaymentIdFilter("");
-                    setCurrentPage(1);
-                  }}
-                  className="absolute top-4 right-2 text-white bg-[#6B7280] hover:bg-[#4B5563] rounded-full p-1 transition-colors"
-                  type="button"
-                >
-                  <XIcon size={12} />
-                </button>
-              )}
-            </div>
-          </div>
-
-        </div>
-
-        {/* Client-side Filters Row 2 */}
+        {/* Filters Row */}
         <div className="flex flex-col lg:grid lg:grid-cols-5 gap-3 items-center py-4 mb-[20px]">
           <div className="w-full lg:col-span-1 grid items-center gap-2">
             <Label htmlFor="studentName" className="text-left block">
@@ -477,10 +410,10 @@ function PaymentSummaryPageContent() {
           <PaymentLogsTable
             data={paginatedLogs}
             isLoading={isLoadingHistory}
-            onPageChange={handlePageChange}
-            currentPage={currentPage}
-            totalPages={totalPages}
-          />
+          onPageChange={handlePageChange}
+          currentPage={currentPage}
+          totalPages={totalPages}
+        />
         ) : (
           <div className="text-center py-12 font-[family-name:var(--font-poppins)] text-[#464646]">
             Please select a Payment Type to view payment logs
