@@ -8,7 +8,7 @@
 // } from "@/components/icons";
 // import { Transaction } from "@/components/icons/Transaction";
 import { ComponentType } from "react";
-import { UserPlus, DollarSign, Shield } from "lucide-react";
+import { UserPlus, DollarSign } from "lucide-react";
 
 // Legacy NavLink type - no longer used
 // type NavLink = {
