@@ -72,15 +72,6 @@ function PaymentSummaryPageContent() {
   const [paymentIdFilter, setPaymentIdFilter] = useState(
     searchParams.get("paymentId") || ""
   );
-  const [minAmountFilter, setMinAmountFilter] = useState(
-    searchParams.get("minAmount") || ""
-  );
-  const [maxAmountFilter, setMaxAmountFilter] = useState(
-    searchParams.get("maxAmount") || ""
-  );
-  const [walletIdFilter, setWalletIdFilter] = useState(
-    searchParams.get("walletId") || ""
-  );
 
   // Build API query parameters
   const queryParams: PaymentQueryParams = useMemo(() => {
@@ -89,15 +80,6 @@ function PaymentSummaryPageContent() {
     if (paymentIdFilter.trim()) params.PaymentId = paymentIdFilter.trim();
     // Map Registration ID/Matric Number to SchoolId
     if (registrationIdSearch.trim()) params.SchoolId = registrationIdSearch.trim();
-    if (walletIdFilter.trim()) params.WalletId = walletIdFilter.trim();
-    if (minAmountFilter.trim()) {
-      const minAmount = parseFloat(minAmountFilter.trim());
-      if (!isNaN(minAmount)) params.MinAmount = minAmount;
-    }
-    if (maxAmountFilter.trim()) {
-      const maxAmount = parseFloat(maxAmountFilter.trim());
-      if (!isNaN(maxAmount)) params.MaxAmount = maxAmount;
-    }
     if (dateRangeFilter?.from) {
       params.From = dateRangeFilter.from.toISOString().split('T')[0];
     }
@@ -106,7 +88,7 @@ function PaymentSummaryPageContent() {
     }
     
     return params;
-  }, [paymentIdFilter, registrationIdSearch, walletIdFilter, minAmountFilter, maxAmountFilter, dateRangeFilter]);
+  }, [paymentIdFilter, registrationIdSearch, dateRangeFilter]);
 
   // Fetch payments from API
   const { data: paymentsData, isLoading, error } = useGetPaymentsMappedQuery(queryParams);
@@ -154,9 +136,6 @@ function PaymentSummaryPageContent() {
     // API filters
     if (paymentIdFilter.trim()) newSearchParams.set("paymentId", paymentIdFilter.trim());
     if (registrationIdSearch.trim()) newSearchParams.set("registrationId", registrationIdSearch.trim());
-    if (walletIdFilter.trim()) newSearchParams.set("walletId", walletIdFilter.trim());
-    if (minAmountFilter.trim()) newSearchParams.set("minAmount", minAmountFilter.trim());
-    if (maxAmountFilter.trim()) newSearchParams.set("maxAmount", maxAmountFilter.trim());
     
     // Client-side filters
     if (studentNameSearch.trim()) newSearchParams.set("studentName", studentNameSearch.trim());
@@ -181,9 +160,6 @@ function PaymentSummaryPageContent() {
     router,
     paymentIdFilter,
     registrationIdSearch,
-    walletIdFilter,
-    minAmountFilter,
-    maxAmountFilter,
     studentNameSearch,
     statusFilter,
     paymentTypeFilter,
@@ -260,8 +236,8 @@ function PaymentSummaryPageContent() {
 
       {/* Content */}
       <div className="mt-[20px]">
+        {/* API Filters Row 1 */}
         <div className="flex flex-col lg:grid lg:grid-cols-5 gap-3 items-center py-4 mb-[20px]">
-          {/* API Filters Row 1 */}
           <div className="w-full lg:col-span-1 grid items-center gap-2">
             <Label htmlFor="paymentId" className="text-left block">
               Payment ID
@@ -296,73 +272,6 @@ function PaymentSummaryPageContent() {
             </div>
           </div>
 
-          <div className="w-full lg:col-span-1 grid items-center gap-2">
-            <Label htmlFor="walletId" className="text-left block">
-              Wallet ID
-            </Label>
-            <div className="relative w-full">
-              <Search
-                className="text-[#A9A9A9] absolute top-4 left-2"
-                size={20}
-              />
-              <Input
-                id="walletId"
-                placeholder="Enter wallet ID"
-                value={walletIdFilter}
-                onChange={(e) => {
-                  setWalletIdFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full h-[50px] focus-visible:ring-0 rounded-[8px] placeholder:text-[#A9A9A9] font-[family-name:var(--font-poppins)] pl-[35px] pr-[40px] font-[500] border-[#CCCCCC80] focus-visible:border-[#CCCCCC80]"
-              />
-              {walletIdFilter && (
-                <button
-                  onClick={() => {
-                    setWalletIdFilter("");
-                    setCurrentPage(1);
-                  }}
-                  className="absolute top-4 right-2 text-white bg-[#6B7280] hover:bg-[#4B5563] rounded-full p-1 transition-colors"
-                  type="button"
-                >
-                  <XIcon size={12} />
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="w-full lg:col-span-1 grid items-center gap-2">
-            <Label htmlFor="minAmount" className="text-left block">
-              Min Amount
-            </Label>
-            <Input
-              id="minAmount"
-              type="number"
-              placeholder="Enter min amount"
-              value={minAmountFilter}
-              onChange={(e) => {
-                setMinAmountFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full h-[50px] focus-visible:ring-0 rounded-[8px] placeholder:text-[#A9A9A9] font-[family-name:var(--font-poppins)] px-3 font-[500] border-[#CCCCCC80] focus-visible:border-[#CCCCCC80]"
-            />
-          </div>
-
-          <div className="w-full lg:col-span-1 grid items-center gap-2">
-            <Label htmlFor="maxAmount" className="text-left block">
-              Max Amount
-            </Label>
-            <Input
-              id="maxAmount"
-              type="number"
-              placeholder="Enter max amount"
-              value={maxAmountFilter}
-              onChange={(e) => {
-                setMaxAmountFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full h-[50px] focus-visible:ring-0 rounded-[8px] placeholder:text-[#A9A9A9] font-[family-name:var(--font-poppins)] px-3 font-[500] border-[#CCCCCC80] focus-visible:border-[#CCCCCC80]"
-            />
-          </div>
         </div>
 
         {/* Client-side Filters Row 2 */}
