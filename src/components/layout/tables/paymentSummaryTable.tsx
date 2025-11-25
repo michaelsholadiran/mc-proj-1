@@ -32,6 +32,12 @@ export type PaymentSummaryData = {
   date: string;
   referenceNumber: string;
   paymentType: string;
+  schoolId: string;
+  startDate: string;
+  endDate: string;
+  commissionAmount: string;
+  hasCommission: boolean;
+  hasStopped: boolean;
 };
 
 interface DataTableProps {
@@ -107,6 +113,54 @@ export function PaymentSummaryTable(props: DataTableProps) {
       cell: ({ row }) => {
         const paymentType = row.getValue("paymentType") as string;
         return <div>{paymentType}</div>;
+      },
+    },
+    {
+      accessorKey: "schoolId",
+      header: () => <div className="font-medium">School ID</div>,
+      cell: ({ row }) => {
+        const schoolId = row.getValue("schoolId") as string;
+        return <div>{schoolId}</div>;
+      },
+    },
+    {
+      accessorKey: "startDate",
+      header: () => <div className="font-medium">Start Date</div>,
+      cell: ({ row }) => {
+        const startDate = row.getValue("startDate") as string;
+        return <div>{startDate}</div>;
+      },
+    },
+    {
+      accessorKey: "endDate",
+      header: () => <div className="font-medium">End Date</div>,
+      cell: ({ row }) => {
+        const endDate = row.getValue("endDate") as string;
+        return <div>{endDate}</div>;
+      },
+    },
+    {
+      accessorKey: "commissionAmount",
+      header: () => <div className="font-medium">Commission Amount</div>,
+      cell: ({ row }) => {
+        const commissionAmount = row.getValue("commissionAmount") as string;
+        return (
+          <div className="font-semibold">
+            {commissionAmount}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "hasCommission",
+      header: () => <div className="font-medium">Has Commission</div>,
+      cell: ({ row }) => {
+        const hasCommission = row.getValue("hasCommission") as boolean;
+        return (
+          <div className={hasCommission ? "text-[#0284B2]" : "text-[#A9A9A9]"}>
+            {hasCommission ? "Yes" : "No"}
+          </div>
+        );
       },
     },
     {

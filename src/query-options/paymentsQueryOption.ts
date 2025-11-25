@@ -58,9 +58,26 @@ const mapPaymentToSummaryData = (payment: PaymentItem): PaymentSummaryData => {
   // Format amount with currency symbol
   const formattedAmount = `₦${payment.amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
   
-  // Format date
-  const date = new Date(payment.createdDate);
-  const formattedDate = date.toLocaleDateString('en-NG', { 
+  // Format commission amount
+  const formattedCommissionAmount = `₦${payment.commissionAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+  
+  // Format dates
+  const createdDate = new Date(payment.createdDate);
+  const formattedDate = createdDate.toLocaleDateString('en-NG', { 
+    year: 'numeric', 
+    month: '2-digit', 
+    day: '2-digit' 
+  });
+
+  const startDate = new Date(payment.startDate);
+  const formattedStartDate = startDate.toLocaleDateString('en-NG', { 
+    year: 'numeric', 
+    month: '2-digit', 
+    day: '2-digit' 
+  });
+
+  const endDate = new Date(payment.endDate);
+  const formattedEndDate = endDate.toLocaleDateString('en-NG', { 
     year: 'numeric', 
     month: '2-digit', 
     day: '2-digit' 
@@ -81,6 +98,12 @@ const mapPaymentToSummaryData = (payment: PaymentItem): PaymentSummaryData => {
     date: formattedDate,
     referenceNumber: payment.id.substring(0, 10).toUpperCase(), // Use part of ID as reference
     paymentType: payment.description || "Other", // Use description as payment type
+    schoolId: payment.schoolId,
+    startDate: formattedStartDate,
+    endDate: formattedEndDate,
+    commissionAmount: formattedCommissionAmount,
+    hasCommission: payment.hasCommission,
+    hasStopped: payment.hasStopped,
   };
 };
 
