@@ -17,6 +17,7 @@ import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import LoaderButton from "@/components/ui/loading-button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { CRM_BASE_URL } from "@/constants/api";
 // COMMENTED OUT FOR TESTING
 // import { useLoginMutation } from "@/query-options/authenticationQueryOption";
 // import { APIError } from "@/types";
@@ -49,7 +50,7 @@ export default function Login() {
     //     const redirectRoles = ['Customer Experience', 'Tech Support', 'Operations', 'IT'];
     //     const userRoles = data.roles.map((role) => role.split('.').pop() || '');
     //     if (userRoles.some((role) => redirectRoles.includes(role))) {
-    //       window.location.href = 'https://crm-ticket-dev.digitvant.com/dashboard';
+    //       window.location.href = `${CRM_BASE_URL}/dashboard`;
     //     } else if (data.isNewUser) {
     //       toast.success("Login successful! Welcome back.");
     //       router.push(`/change-password?email=${form.getValues("username")}`);

@@ -9,7 +9,6 @@ import {
 } from "@/types";
 import { BASE_URL } from "@/constants/api";
 
-// Role Management Functions
 const getRoles = async (): Promise<{ data: Role[] }> => {
   const response = await fetch(`${BASE_URL}/administration/roles`);
   if (!response.ok) {
@@ -96,7 +95,6 @@ const deleteRole = async (roleName: string): Promise<{ success: boolean }> => {
   return data;
 };
 
-// User-Role Assignment Functions
 const getUserRole = async (username: string): Promise<GetUserRoleResponse> => {
   const response = await fetch(
     `${BASE_URL}/administration/user-role/get/${username}`
@@ -137,7 +135,6 @@ const assignRoleToUser = async ({
   return data;
 };
 
-// Query Options and Mutation Hooks
 export function getRolesQueryOptions() {
   return queryOptions({
     queryKey: ["roles"],
@@ -185,7 +182,6 @@ export function useAssignRoleToUserMutation() {
   });
 }
 
-// Export all functions if needed for direct usage
 export {
   getRoles,
   createRole,

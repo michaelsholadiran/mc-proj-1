@@ -6,20 +6,17 @@ import {
   CustomerAnalyticsQueryParams,
   CustomerAnalyticsResponse
 } from "@/types/customers";
+import { SSO_BASE_URL, PROFILE_BASE_URL } from "@/constants/api";
 
-// SSO Token interface
 interface SSOTokenResponse {
   access_token: string;
   token_type: string;
   expires_in: number;
 }
 
-// Token cache to avoid repeated SSO requests
 let tokenCache: { token: string; expiresAt: number } | null = null;
 
-// Function to get SSO token with caching
 const getSSOToken = async (): Promise<string> => {
-  // Check if we have a valid cached token
   if (tokenCache && Date.now() < tokenCache.expiresAt) {
     return tokenCache.token;
   }
@@ -29,7 +26,7 @@ const getSSOToken = async (): Promise<string> => {
   formData.append('client_id', 'KuUmBOwOASN_gBm');
   formData.append('client_secret', 'OsZgDlbm2L4y6DCpkvklZ80sNHg6Q4BlvLYUn1viWQ9ifP5S50');
 
-  const response = await fetch('https://sso-app-dev.digitvant.com/connect/token', {
+  const response = await fetch(`${SSO_BASE_URL}/connect/token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -43,7 +40,6 @@ const getSSOToken = async (): Promise<string> => {
 
   const data: SSOTokenResponse = await response.json();
   
-  // Cache the token with expiration (subtract 5 minutes for safety)
   const expiresAt = Date.now() + (data.expires_in - 300) * 1000;
   tokenCache = {
     token: data.access_token,
@@ -56,16 +52,14 @@ const getSSOToken = async (): Promise<string> => {
 export const getCustomers = async (params: CustomerQueryParams): Promise<CustomersApiResponse> => {
   const searchParams = new URLSearchParams();
   
-  // Add parameters only if they have values
   if (params.pageNumber) searchParams.set('PageNumber', params.pageNumber.toString());
   if (params.pageSize) searchParams.set('PageSize', params.pageSize.toString());
   if (params.customerRef) searchParams.set('CustomerRef', params.customerRef);
   if (params.status) searchParams.set('Status', params.status);
   if (params.createdDate) searchParams.set('CreatedDate', params.createdDate);
 
-  const url = `https://profile-dev.digitvant.com/api/v1/administration/profiles?${searchParams.toString()}`;
+  const url = `${PROFILE_BASE_URL}/administration/profiles?${searchParams.toString()}`;
   
-  // Get SSO token for customers API
   const ssoToken = await getSSOToken();
   
   const response = await fetch(url, {
@@ -78,12 +72,10 @@ export const getCustomers = async (params: CustomerQueryParams): Promise<Custome
 
   const data = await response.json();
 
-  // Handle 400 status but still return data if it exists
   if (!response.ok && response.status !== 400) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  // For 400 status, check if we have data in the response
   if (response.status === 400) {
     if (data && data.data && data.data.data && Array.isArray(data.data.data)) {
       return data;
@@ -98,25 +90,22 @@ export const getCustomers = async (params: CustomerQueryParams): Promise<Custome
 export const getCustomersQueryOptions = (params: CustomerQueryParams) => ({
   queryKey: ['customers', params],
   queryFn: () => getCustomers(params),
-  staleTime: 5 * 60 * 1000, // 5 minutes
-  enabled: true, // Ensure the query is enabled
+  staleTime: 5 * 60 * 1000,
+  enabled: true,
 });
 
 export const useGetCustomersQuery = (params: CustomerQueryParams) => {
   return useQuery(getCustomersQueryOptions(params));
 };
 
-// Customer Analytics Functions
 export const getCustomerAnalytics = async (params: CustomerAnalyticsQueryParams): Promise<CustomerAnalyticsResponse> => {
   const searchParams = new URLSearchParams();
   
-  // Add parameters only if they have values
   if (params.startDate) searchParams.set('startDate', params.startDate);
   if (params.endDate) searchParams.set('endDate', params.endDate);
 
-  const url = `https://profile-dev.digitvant.com/api/v1/analytics/get-summary?${searchParams.toString()}`;
+  const url = `${PROFILE_BASE_URL}/analytics/get-summary?${searchParams.toString()}`;
   
-  // Get SSO token for analytics API
   const ssoToken = await getSSOToken();
   
   const response = await fetch(url, {
@@ -138,7 +127,7 @@ export const getCustomerAnalytics = async (params: CustomerAnalyticsQueryParams)
 export const getCustomerAnalyticsQueryOptions = (params: CustomerAnalyticsQueryParams) => ({
   queryKey: ['customerAnalytics', params],
   queryFn: () => getCustomerAnalytics(params),
-  staleTime: 5 * 60 * 1000, // 5 minutes
+  staleTime: 5 * 60 * 1000,
   enabled: true,
 });
 
@@ -146,9 +135,7 @@ export const useGetCustomerAnalyticsQuery = (params: CustomerAnalyticsQueryParam
   return useQuery(getCustomerAnalyticsQueryOptions(params));
 };
 
-// Export Customers Function
 export const exportCustomers = async (params: CustomerQueryParams, exportFormat: "CSV" | "Excel"): Promise<Blob> => {
-  // Prepare request body with filter parameters
   const requestBody = {
     customerRef: params.customerRef || undefined,
     status: params.status || undefined,
@@ -158,9 +145,8 @@ export const exportCustomers = async (params: CustomerQueryParams, exportFormat:
     pageSize: params.pageSize || 20
   };
 
-  const url = `https://profile-dev.digitvant.com/api/v1/administration/export-profiles`;
+  const url = `${PROFILE_BASE_URL}/administration/export-profiles`;
   
-  // Get SSO token for export API
   const ssoToken = await getSSOToken();
   
   const response = await fetch(url, {
@@ -179,11 +165,9 @@ export const exportCustomers = async (params: CustomerQueryParams, exportFormat:
   return response.blob();
 };
 
-// Get Single Customer Function
 export const getSingleCustomer = async (email: string): Promise<Customer> => {
-  const url = `https://profile-dev.digitvant.com/api/v1/administration/get-profile/${encodeURIComponent(email)}`;
+  const url = `${PROFILE_BASE_URL}/administration/get-profile/${encodeURIComponent(email)}`;
   
-  // Get SSO token for single customer API
   const ssoToken = await getSSOToken();
   
   const response = await fetch(url, {
@@ -199,26 +183,23 @@ export const getSingleCustomer = async (email: string): Promise<Customer> => {
   }
 
   const responseData = await response.json();
-  // Handle the new response structure with data wrapper
   return responseData.data;
 };
 
 export const getSingleCustomerQueryOptions = (email: string) => ({
   queryKey: ['singleCustomer', email],
   queryFn: () => getSingleCustomer(email),
-  staleTime: 5 * 60 * 1000, // 5 minutes
-  enabled: !!email, // Only run if email exists
+  staleTime: 5 * 60 * 1000,
+  enabled: !!email,
 });
 
 export const useGetSingleCustomerQuery = (email: string) => {
   return useQuery(getSingleCustomerQueryOptions(email));
 };
 
-// Toggle Customer Status Function
 export const toggleCustomerStatus = async (profileId: string): Promise<{ isSuccessful: boolean; message: string; code: string }> => {
-  const url = `https://profile-dev.digitvant.com/api/v1/administration/toggle-profile`;
+  const url = `${PROFILE_BASE_URL}/administration/toggle-profile`;
   
-  // Get SSO token for toggle status API
   const ssoToken = await getSSOToken();
   
   const response = await fetch(url, {
@@ -238,14 +219,12 @@ export const toggleCustomerStatus = async (profileId: string): Promise<{ isSucce
   return responseData;
 };
 
-// Toggle Customer Status Mutation Hook
 export const useToggleCustomerStatusMutation = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: toggleCustomerStatus,
     onSuccess: () => {
-      // Invalidate and refetch customer data
       queryClient.invalidateQueries({ queryKey: ['singleCustomer'] });
       queryClient.invalidateQueries({ queryKey: ['customers'] });
     },

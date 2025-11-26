@@ -47,7 +47,6 @@ const getUsers = async (params: UsersQueryParams = {}): Promise<PaginatedRespons
     searchKeyword,
   } = params;
 
-  // Build query string
   const queryParams = new URLSearchParams();
   
   if (startDate) queryParams.append('StartDate', startDate);
@@ -55,12 +54,11 @@ const getUsers = async (params: UsersQueryParams = {}): Promise<PaginatedRespons
   if (status && status !== 'all') queryParams.append('Status', status);
   if (role && role !== 'all') queryParams.append('Role', role);
   if (pageNumber) queryParams.append('PageNumber', pageNumber.toString());
-  // Always add pageSize since it has a default value
   queryParams.append('PageSize', pageSize.toString());
   if (searchKeyword) queryParams.append('Username', searchKeyword);
 
   const queryString = queryParams.toString();
-  const url = `https://smartuser-dev.digitvant.com/api/v1/administration/users${queryString ? `?${queryString}` : ''}`;
+  const url = `${BASE_URL}/administration/users${queryString ? `?${queryString}` : ''}`;
 
   const response = await fetch(url);
   if (!response.ok) {
@@ -78,13 +76,11 @@ const getUserById = async (userId: string): Promise<{ data: User }> => {
 };
 
 const getAuthenticatedUser = async (): Promise<{ data: User }> => {
-  // Get token from server-side cookie
   const token = await getAuthCookie();
   if (!token) {
     throw new Error("Unauthorized - No token found");
   }
 
-  // Decode JWT to get SourceId (userId)
   let userId: string | null = null;
   try {
     const decoded = jwt.decode(token) as { SourceId?: string } | null;
@@ -97,7 +93,6 @@ const getAuthenticatedUser = async (): Promise<{ data: User }> => {
     throw new Error("User ID not found in token");
   }
 
-  // Call external API directly
   const response = await fetch(`${BASE_URL}/administration/user/${userId}`, {
     method: "GET",
     headers: {
@@ -122,7 +117,6 @@ const exportUsers = async (params: UsersQueryParams = {}, format: 'csv' | 'xlsx'
     searchKeyword,
   } = params;
 
-  // Build query string
   const queryParams = new URLSearchParams();
   
   if (startDate) queryParams.append('StartDate', startDate);
@@ -130,7 +124,6 @@ const exportUsers = async (params: UsersQueryParams = {}, format: 'csv' | 'xlsx'
   if (status && status !== 'all') queryParams.append('Status', status);
   if (role && role !== 'all') queryParams.append('Role', role);
   if (searchKeyword) queryParams.append('Username', searchKeyword);
-  // Convert format to the expected API format
   const apiFormat = format === 'csv' ? 'CSV' : 'Excel';
   queryParams.append('Format', apiFormat);
 
@@ -152,7 +145,6 @@ const exportUsers = async (params: UsersQueryParams = {}, format: 'csv' | 'xlsx'
 };
 
 const updateUser = async (userId: string, formData: UpdateUserPayload): Promise<ApiResponse> => {
-  // Get token from server-side cookie
   const token = await getAuthCookie();
   if (!token) {
     throw new Error("Unauthorized - No token found");

@@ -3,20 +3,17 @@ import {
   TransactionQueryParams, 
   TransactionsApiResponse 
 } from "@/types/transactions";
+import { SSO_BASE_URL, ACCOUNT_BASE_URL } from "@/constants/api";
 
-// SSO Token interface
 interface SSOTokenResponse {
   access_token: string;
   token_type: string;
   expires_in: number;
 }
 
-// Token cache to avoid repeated SSO requests
 let tokenCache: { token: string; expiresAt: number } | null = null;
 
-// Function to get SSO token with caching
 const getSSOToken = async (): Promise<string> => {
-  // Check if we have a valid cached token
   if (tokenCache && Date.now() < tokenCache.expiresAt) {
     return tokenCache.token;
   }
@@ -26,7 +23,7 @@ const getSSOToken = async (): Promise<string> => {
   formData.append('client_id', 'KuUmBOwOASN_gBm');
   formData.append('client_secret', 'OsZgDlbm2L4y6DCpkvklZ80sNHg6Q4BlvLYUn1viWQ9ifP5S50');
 
-  const response = await fetch('https://sso-app-dev.digitvant.com/connect/token', {
+  const response = await fetch(`${SSO_BASE_URL}/connect/token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -40,7 +37,6 @@ const getSSOToken = async (): Promise<string> => {
 
   const data: SSOTokenResponse = await response.json();
   
-  // Cache the token with expiration (subtract 5 minutes for safety)
   const expiresAt = Date.now() + (data.expires_in - 300) * 1000;
   tokenCache = {
     token: data.access_token,
@@ -53,7 +49,6 @@ const getSSOToken = async (): Promise<string> => {
 export const getTransactions = async (params: TransactionQueryParams): Promise<TransactionsApiResponse> => {
   const searchParams = new URLSearchParams();
   
-  // Add parameters only if they have values
   if (params.pageNumber) searchParams.set('PageNumber', params.pageNumber.toString());
   if (params.pageSize) searchParams.set('PageSize', params.pageSize.toString());
   if (params.accountNumber) searchParams.set('AccountNumber', params.accountNumber);
@@ -67,9 +62,8 @@ export const getTransactions = async (params: TransactionQueryParams): Promise<T
   if (params.financialDateFrom) searchParams.set('FinancialDateFrom', params.financialDateFrom);
   if (params.financialDateTo) searchParams.set('FinancialDateTo', params.financialDateTo);
 
-  const url = `https://account-dev.digitvant.com/api/v1/report/account-history?${searchParams.toString()}`;
+  const url = `${ACCOUNT_BASE_URL}/report/account-history?${searchParams.toString()}`;
   
-  // Get SSO token for transactions API
   const ssoToken = await getSSOToken();
   
   const response = await fetch(url, {
@@ -82,12 +76,10 @@ export const getTransactions = async (params: TransactionQueryParams): Promise<T
 
   const data = await response.json();
 
-  // Handle 400 status but still return data if it exists
   if (!response.ok && response.status !== 400) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  // For 400 status, check if we have data in the response
   if (response.status === 400) {
     if (data && data.data && data.data.data && Array.isArray(data.data.data)) {
       return data;
@@ -102,8 +94,8 @@ export const getTransactions = async (params: TransactionQueryParams): Promise<T
 export const getTransactionsQueryOptions = (params: TransactionQueryParams) => ({
   queryKey: ['transactions', params],
   queryFn: () => getTransactions(params),
-  staleTime: 5 * 60 * 1000, // 5 minutes
-  enabled: true, // Ensure the query is enabled
+  staleTime: 5 * 60 * 1000,
+  enabled: true,
 });
 
 export const useGetTransactionsQuery = (params: TransactionQueryParams) => {

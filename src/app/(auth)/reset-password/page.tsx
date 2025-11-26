@@ -24,6 +24,7 @@ import { useResetPasswordMutation } from "@/query-options/authenticationQueryOpt
 import { APIError } from "@/types";
 import { toast } from "sonner";
 import PasswordValidation from '@/components/forms/PasswordValidation';
+import { CRM_BASE_URL } from "@/constants/api";
 
 function ResetPasswordForm() {
   const [passwordType, setPasswordType] = useState("password");
@@ -73,7 +74,7 @@ function ResetPasswordForm() {
     resetPassword(payload, {
       onSuccess: () => {
         if (searchParams.get("redirectfrom") === "crm") {
-          window.location.href = "https://crm-ticket-dev.digitvant.com/login";
+          window.location.href = `${CRM_BASE_URL}/login`;
         } else {
           router.push("/reset-password-successful");
         }

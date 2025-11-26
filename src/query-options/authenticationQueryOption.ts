@@ -90,7 +90,8 @@ const initiatePasswordReset = async (
 };
 
 const resetPassword = async (formData: ResetPasswordPayload) => {
-  const res = await fetch(`https://smartuser-dev.digitvant.com/api/v2/authentication/reset-password`, {
+  const resetPasswordUrl = BASE_URL.replace('/api/v1', '/api/v2');
+  const res = await fetch(`${resetPasswordUrl}/authentication/reset-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(formData),
